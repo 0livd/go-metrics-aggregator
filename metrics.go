@@ -1,6 +1,7 @@
 package metricsaggregator
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"strings"
@@ -40,6 +41,14 @@ func (mb *metricBatch) byName() map[string]metricBatch {
 		metricsByName[metric.Name] = append(metricsByName[metric.Name], metric)
 	}
 	return metricsByName
+}
+
+func (mb metricBatch) String() string {
+	var toJoin []Metric
+	for _, m := range mb {
+		toJoin = append(toJoin, *m)
+	}
+	return fmt.Sprintf("%+v", toJoin)
 }
 
 // aggregate aggregates metrics according to their name and metadata

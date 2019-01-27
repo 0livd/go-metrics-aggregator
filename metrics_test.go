@@ -372,12 +372,9 @@ func TestMetricsHandler(t *testing.T) {
 		// Fail if we got a nil result but expected something
 		if receivedBatch == nil {
 			if test.expected != nil {
-				var expected []Metric
-				for _, m := range test.expected {
-					expected = append(expected, *m)
-				}
-				t.Errorf("%s test failed got %+v and expected %+v", test.Name, nil, expected)
+				t.Errorf("%s test failed got %+v and expected %+v", test.Name, nil, test.expected)
 			}
+			continue
 		}
 		// Loop on results and use ObjectsAreEqual to avoid ordering issues
 		for _, m := range *receivedBatch {
@@ -389,15 +386,7 @@ func TestMetricsHandler(t *testing.T) {
 				}
 			}
 			if failed {
-				var actual []Metric
-				for _, m := range backend.receivedBatches {
-					actual = append(actual, *m)
-				}
-				var expected []Metric
-				for _, m := range test.expected {
-					expected = append(expected, *m)
-				}
-				t.Errorf("%s test failed got %+v and expected %+v", test.Name, actual, expected)
+				t.Errorf("%s test failed got %+v and expected %+v", test.Name, receivedBatch, test.expected)
 			}
 		}
 	}
