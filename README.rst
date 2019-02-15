@@ -11,3 +11,24 @@ Only mean aggregation is supported for the moment, percentile aggregation is to 
 Usage
 =====
 
+.. code-block:: go
+
+    import (
+        "time"
+
+        metrics "github.com/0livd/go-metrics-aggregator"
+    )
+
+    func main() {
+        cwBackend := metrics.NewCloudwatchBackend("test", nil)
+        metricsChan := make(chan *metrics.Metric)
+        metrics.NewMetricsHandler(cwBackend, nil, metricsChan)
+
+        metricsChan <- &metrics.Metric{
+            Name:     "MyMetric",
+            Time:     time.Now(),
+            Value:    1.0,
+            Metadata: metrics.MetricMetadata{"Key": "Val"},
+            Unit:     "Count",
+        }
+    }
