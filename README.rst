@@ -30,4 +30,5 @@ Usage
             Metadata: metrics.MetricMetadata{"Key": "Val"},
             Unit:     "Count",
         })
+        metricsHandler.Close()
     }

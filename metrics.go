@@ -136,6 +136,7 @@ type MetricsHandler struct {
 	metrics         metricBatch
 	ticker          *time.Ticker
 	metricBackend   metricBackend
+	cancel          chan bool
 }
 
 // NewMetricsHandler creates a metrichandler and launches its run method in a goroutine
@@ -144,6 +145,7 @@ func NewMetricsHandler(metricBackend metricBackend, sendInterval time.Duration) 
 		incomingMetrics: make(chan *Metric),
 		ticker:          time.NewTicker(sendInterval),
 		metricBackend:   metricBackend,
+		cancel:          make(chan bool),
 	}
 	go metricsHandler.run()
 	return metricsHandler
@@ -158,9 +160,11 @@ func (mh *MetricsHandler) run() {
 				mh.sendMetrics()
 			}
 		case <-mh.ticker.C:
-			if len(mh.metrics) != 0 {
-				mh.sendMetrics()
-			}
+			mh.sendMetrics()
+		case <-mh.cancel:
+			close(mh.incomingMetrics)
+			mh.sendMetrics()
+			return
 		}
 	}
 }
@@ -179,4 +183,9 @@ func (mh *MetricsHandler) sendMetrics() {
 			}
 		}(truncatedMetrics)
 	}
+}
+
+// Close uses the cancel channel to make the run method send the last remaining metrics and exit
+func (mh *MetricsHandler) Close() {
+	mh.cancel <- true
 }

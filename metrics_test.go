@@ -389,5 +389,6 @@ func TestMetricsHandler(t *testing.T) {
 				t.Errorf("%s test failed got %+v and expected %+v", test.Name, receivedBatch, test.expected)
 			}
 		}
+		metricsHandler.Close()
 	}
 }
