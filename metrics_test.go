@@ -358,12 +358,12 @@ func TestMetricsHandler(t *testing.T) {
 		if test.method == bufferSize {
 			maxMetricsInBuffer = 4
 		}
-		tickChan := make(chan time.Time)
 		backend := &DummyBackend{make(chan *metricBatch)}
-		metricsChan := make(chan *Metric)
-		NewMetricsHandler(backend, tickChan, metricsChan)
+		metricsHandler := NewMetricsHandler(backend, 1*time.Second)
+		tickChan := make(chan time.Time)
+		metricsHandler.ticker.C = tickChan
 		for _, metric := range *test.inputBatch {
-			metricsChan <- metric
+			metricsHandler.Add(metric)
 		}
 		if test.method == timer {
 			tickChan <- time.Now()

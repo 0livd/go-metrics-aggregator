@@ -132,23 +132,17 @@ func (mb *metricBatch) truncate(chunckSize int) *metricBatch {
 }
 
 type MetricsHandler struct {
-	IncomingMetrics <-chan *Metric
+	incomingMetrics chan *Metric
 	metrics         metricBatch
-	tickChan        <-chan time.Time
+	ticker          *time.Ticker
 	metricBackend   metricBackend
 }
 
-// NewMetricsHandler creates a metrichandler and launch its run method in a goroutine
-func NewMetricsHandler(metricBackend metricBackend, tickChan <-chan time.Time, incomingMetrics <-chan *Metric) *MetricsHandler {
-	if tickChan == nil {
-		tickChan = make(chan time.Time)
-	}
-	if incomingMetrics == nil {
-		incomingMetrics = make(chan *Metric)
-	}
+// NewMetricsHandler creates a metrichandler and launches its run method in a goroutine
+func NewMetricsHandler(metricBackend metricBackend, sendInterval time.Duration) *MetricsHandler {
 	metricsHandler := &MetricsHandler{
-		IncomingMetrics: incomingMetrics,
-		tickChan:        tickChan,
+		incomingMetrics: make(chan *Metric),
+		ticker:          time.NewTicker(sendInterval),
 		metricBackend:   metricBackend,
 	}
 	go metricsHandler.run()
@@ -158,17 +152,21 @@ func NewMetricsHandler(metricBackend metricBackend, tickChan <-chan time.Time, i
 func (mh *MetricsHandler) run() {
 	for {
 		select {
-		case metric := <-mh.IncomingMetrics:
+		case metric := <-mh.incomingMetrics:
 			mh.metrics = append(mh.metrics, metric)
 			if len(mh.metrics) >= maxMetricsInBuffer {
 				mh.sendMetrics()
 			}
-		case <-mh.tickChan:
+		case <-mh.ticker.C:
 			if len(mh.metrics) != 0 {
 				mh.sendMetrics()
 			}
 		}
 	}
+}
+
+func (mh *MetricsHandler) Add(metric *Metric) {
+	mh.incomingMetrics <- metric
 }
 
 func (mh *MetricsHandler) sendMetrics() {
