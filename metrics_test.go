@@ -18,7 +18,6 @@ const (
 
 func (db *DummyBackend) Publish(metricBatch *metricBatch) error {
 	db.receivedBatch <- metricBatch
-	<-db.receivedBatch
 	return nil
 }
 
